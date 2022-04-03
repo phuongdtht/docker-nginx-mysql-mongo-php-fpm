@@ -1,0 +1,69 @@
+version: "3.7"
+
+services:
+  nginx:
+    dns:
+      - 8.8.8.8
+      - 4.4.4.4
+    build:
+      context: ./images
+      dockerfile: nginx.Dockerfile
+    working_dir: /var/www/html
+    container_name: web
+    ports:
+      - "80:80"
+    volumes:
+      - ./projects:/var/www/html
+      - ./logs/nginx_log:/var/log/nginx
+      - ./config/nginx/project1.conf:/etc/nginx/conf.d/project1.conf
+      - ./config/nginx/project2.conf:/etc/nginx/conf.d/project2.conf
+    links:
+      - php
+      - mysql
+      - mongodb
+
+  php:
+    build:
+      context: ./images
+      dockerfile: php.Dockerfile
+    container_name: api
+    volumes:
+      - ./projects:/var/www/html
+      - ./logs/php-fpm/php-fpm.log:/var/log/php-fpm.log
+      - ./config/php-fpm/custom.ini:/usr/local/etc/php/conf.d/custom.ini
+
+  mysql:
+    build:
+      context: ./images
+      dockerfile: mysql.Dockerfile
+    container_name: mysql
+    ports:
+      - "13306:13306"
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+
+  mongodb:
+    image: mongo:5.0
+    container_name: mongodb
+    volumes:
+      - ./data/mongodb/data/db:/data/db
+      - ./data/mongodb/data/configdb:/data/configdb
+      - ./config/mongo/:/docker-entrypoint-initdb.d/:ro
+    ports:
+      - "27017:27017"
+    command: mongod --auth
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8111:8081
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=root
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=root
