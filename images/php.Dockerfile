@@ -12,8 +12,4 @@ RUN useradd dev -g dev -d /home/dev -m
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-RUN apt-get update \
-    && apt-get install -y \
-    libzip-dev \
-    zip \
-    && docker-php-ext-install zip
+RUN echo "extension=mongodb.so" >> /usr/local/etc/php/conf.d/mongodb.ini
